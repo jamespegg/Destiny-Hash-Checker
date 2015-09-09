@@ -1,4 +1,5 @@
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -9,9 +10,10 @@ import java.util.Random;
 public class Hasher {
 	byte[] input;
 	String hash = "1ceab1f5b327682c7835e21b96711429";
+	int hashLength = 24;
 	Random random = new Random();
 	MessageDigest md;
-	char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ".toCharArray();
+	char[] chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.!?".toCharArray();
 	
 	/**
 	 * Sets up the MessageDigest
@@ -29,20 +31,21 @@ public class Hasher {
 	 * @return
 	 */
 	public boolean check() {
+
+		boolean found = false;
 		
-		int count = 0;
-		do {
-			input = generateInput(1);
-			
-			// Print out a . for every 100,000 iterations
-			if (count > 100000) {
-				System.out.print(".");
-				count = 0;
-			} else {
-				++count;
+		while (!found) {
+			try {
+				input = generateInput(1);
+			} catch (HasherException e) {
+				continue;
 			}
 			
-		} while (!isHash(input));
+			// Only increment if the hash was eligible
+			HashThread.count.getAndIncrement();
+			
+			found = isHash(input);
+		}
 		
 		
 		// Obviously print out the match!
@@ -58,45 +61,58 @@ public class Hasher {
 	 */
 	public boolean isHash(byte[] input) {
 		md.update(input);
-		String output = toHex(md.digest(input));
-
-		if (output.equals(hash)) {
+		byte[] output = md.digest(input);
+		
+		if (Arrays.equals(output, hexStringToByteArray(hash))) {
 			return true;
 		} else {
 			return false;
-		}
+		}	
 	}
+	
+	public static byte[] hexStringToByteArray(String s) {
+	    int len = s.length();
+	    
+	    byte[] data = new byte[len / 2];
+	    for (int i = 0; i < len; i += 2) {
+	        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+	                             + Character.digit(s.charAt(i+1), 16));
+	    }
+	    return data;
+	}	
 	
 	/**
 	 * Generates a new byte array hash
 	 * @param counter
 	 * @return
 	 */
-	public byte[] generateInput(int counter) {
-		input = new byte[24];
+	public byte[] generateInput(int counter) throws HasherException {
+		input = new byte[hashLength];
 
 		for (int i = 0; i < input.length; i++) {
 			char c = chars[random.nextInt(chars.length)];
 			input[i] = (byte) c;
 		}
 		
-		// Need to make a few sanity checks here
-		String string = new String(input);
-		int count = string.length() - string.replace(" ", "").length();
-		
 		// We have three words, so we need two spaces
 		// Also, an input can't start or end with a space
-		if (count == 2 && !string.substring(0, 1).equals(" ") && !string.substring(string.length() - 1).equals(" ")) {
+		if (countByte(input, (byte) ' ') == 2 && input[0] != (byte) ' ' && input[input.length - 1] != (byte) ' ') {
 			return input;
 		} else {
-			
-			// This is to stop stackoverflows... Probably not that efficient
-			if (counter < 20) {
-				return generateInput(counter + 1);
-			} else {
-				return input;
+			throw new HasherException("Spaces in the wrong place");
+		}
+	}
+	
+	public int countByte(byte[] input, byte search) {
+		int count = 0;
+		
+		for (int i = 0; i < input.length; i++) {
+			if (input[i] == search) {
+				++count;
 			}
 		}
+		
+		return count;
 	}
 	
 	/**

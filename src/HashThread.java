@@ -1,3 +1,4 @@
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Destiny Hash Checker Thread
@@ -7,6 +8,7 @@
 public class HashThread implements Runnable {
 
 	private Thread t;
+	public static final AtomicInteger count = new AtomicInteger();
 	
 	public void run() {
 		Hasher hasher = new Hasher();

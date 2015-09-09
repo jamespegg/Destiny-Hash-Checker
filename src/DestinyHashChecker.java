@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 /**
  * Destiny Hash Checker
@@ -10,13 +11,14 @@ public class DestinyHashChecker {
 	
 	public static void main(String[] args) {
 		
-		if (args[0] == null) {
-			System.out.println("Please provide the number of threads to run");
-			System.exit(1);
-		} else {
-			int threadCount = Integer.parseInt(args[0]);
+		Scanner keyboard = new Scanner(System.in);
+		
+		System.out.print("Thread count : ");
+		
+		int threadCount = keyboard.nextInt();
 			
 			System.out.println("Running with " + threadCount + " threads");
+			System.out.println("Press enter to exit");
 
 			List<HashThread> threads = new ArrayList<>();
 			
@@ -27,7 +29,25 @@ public class DestinyHashChecker {
 			for (HashThread thread : threads) {
 				thread.start();
 			}
-		}
+			
+			
+			boolean interupted = false;
+			
+			while (!interupted) {
+				String in = keyboard.nextLine();
+				in = keyboard.nextLine();
+				
+				if (in != null) {
+					interupted = true;
+				}
+			}
+			
+			System.out.println("Stopping...");
+			System.out.println("Hash iterations : " + HashThread.count);
+			
+			keyboard.close();
+			System.exit(1);
+
 		
 	}
 	
