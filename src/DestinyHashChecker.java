@@ -1,6 +1,10 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Destiny Hash Checker
@@ -10,43 +14,40 @@ import java.util.Scanner;
 public class DestinyHashChecker {
 	
 	public static void main(String[] args) {
-		
-		Scanner keyboard = new Scanner(System.in);
-		
-		System.out.print("Thread count : ");
-		
-		int threadCount = keyboard.nextInt();
+
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(System.in))) {
+			System.out.print("Thread count : ");
+			int threadCount = Integer.parseInt(in.readLine());
 			
 			System.out.println("Running with " + threadCount + " threads");
 			System.out.println("Press enter to exit");
+			
+			List<Thread> threads = new ArrayList<>();
 
-			List<HashThread> threads = new ArrayList<>();
-			
 			for (int i = 0; i < threadCount; i++) {
-				threads.add(new HashThread());
+				threads.add(new Thread(new Hasher()));
 			}
 			
-			for (HashThread thread : threads) {
+			for (Thread thread : threads) {
 				thread.start();
-			}
+			}	
 			
-			
-			boolean interupted = false;
-			
-			while (!interupted) {
-				String in = keyboard.nextLine();
-				in = keyboard.nextLine();
+			while (in.readLine() != null) {
+				System.out.println("Stopping...");
 				
-				if (in != null) {
-					interupted = true;
-				}
+				for (Thread thread : threads) {
+					thread.interrupt();
+				}			
+				
+				System.out.println("Hash iterations : " + Hasher.count);
+				
+				System.exit(1);
 			}
-			
-			System.out.println("Stopping...");
-			System.out.println("Hash iterations : " + HashThread.count);
-			
-			keyboard.close();
-			System.exit(1);
+		} catch (IOException e) {
+			System.out.println("Something broke..");
+		} catch (NoSuchAlgorithmException e) {
+			System.out.println("Something broke..");
+		}
 
 		
 	}
